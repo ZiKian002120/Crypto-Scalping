@@ -1,0 +1,357 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance History</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.10/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #D4EFDF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #contentWrapper {
+            background-color: white;
+            padding: 0px 0px;
+            width: 80%;
+            max-width: 1800px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Navigation Bar Styling */
+        .navbar {
+            width: 100%;
+            background-color: #0E6655;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .navbar a {
+            float: left;
+            color: white;
+            text-align: center;
+            padding: 14px 35px;
+            margin: 0px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+            .navbar a:hover {
+                background-color: #007a63;
+                color: white;
+            }
+
+        /* Balance display styling */
+        #balanceContainer {
+            width: 80%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            margin-right: 15px;
+        }
+
+            #balanceContainer i {
+            }
+
+            #balanceContainer img {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+
+        #logoutLink {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 14px 16px;
+        }
+
+            #logoutLink:hover {
+                background-color: #007a63;
+                color: white;
+            }
+
+        label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        input {
+            margin-right: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #009879;
+        }
+
+        #content {
+            margin: auto;
+            background-color: #fff;
+            padding: 44px;
+            min-height: 800px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-height: 1000px;
+            overflow-y: auto;
+        }
+
+        /* Balance History Section */
+        #balanceHistorySection {
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        #balanceHistoryControls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+            #balanceHistoryControls label {
+                margin-right: 10px;
+                font-weight: bold;
+            }
+
+            #balanceHistoryControls input {
+                margin-right: 10px;
+                padding: 5px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+
+            #balanceHistoryControls button {
+                padding: 10px 20px;
+                background-color: #009879;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+                #balanceHistoryControls button:hover {
+                    background-color: #007a63;
+                }
+
+        .chart-container {
+            width: 100%;
+            min-height: 500px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="contentWrapper">
+        <!-- Navigation Bar -->
+        <div class="navbar">
+            <div class="navbar-left">
+                <a href="/index.html">Home</a>
+                <a href="/orderHistory.html">Order History</a>
+                <a href="/balanceHistory.html">Balance History</a>
+                <a href="/Accounts.html">Accounts</a>
+            </div>
+            <div class="navbar-right">
+                <div id="balanceContainer">
+                    <img src="/images/walletwhite.png" alt="Wallet Icon">
+                    <span id="balance">Loading balance...</span>
+                </div>
+                <a href="login.html" id="logoutLink">Logout</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h1>Balance History</h1>
+
+            <div id="balanceHistorySection">
+                <div id="balanceHistoryControls">
+                    <label for="balanceStartDate">Start Date:</label>
+                    <input type="date" id="balanceStartDate">
+                    <label for="balanceEndDate">End Date:</label>
+                    <input type="date" id="balanceEndDate">
+                    <button id="fetchBalanceHistoryButton">Fetch Balance History</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="balanceHistoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchBalance();
+            const balanceHistoryChartCtx = document.getElementById('balanceHistoryChart').getContext('2d');
+            let balanceHistoryChart;
+
+            // Initialize balance history with the last 7 days
+            const today = new Date();
+            today.setDate(today.getDate() + 1);
+            const lastWeek = new Date(today);
+            lastWeek.setDate(lastWeek.getDate() - 7);
+
+            document.getElementById('balanceStartDate').valueAsDate = lastWeek;
+            document.getElementById('balanceEndDate').valueAsDate = today;
+
+            fetchBalanceHistory(lastWeek.toISOString().split('T')[0], today.toISOString().split('T')[0]);
+
+            document.getElementById('fetchBalanceHistoryButton').addEventListener('click', function () {
+                const startDate = document.getElementById('balanceStartDate').value;
+                const endDate = document.getElementById('balanceEndDate').value;
+
+                if (startDate && endDate) {
+                    if (new Date(startDate) > new Date(endDate)) {
+                        alert('End date cannot be earlier than start date.');
+                    } else {
+                        fetchBalanceHistory(startDate, endDate);
+                    }
+                } else {
+                    alert('Please select both start and end dates.');
+                }
+            });
+
+            async function fetchBalanceHistory(startDate, endDate) {
+                try {
+                    const response = await fetch(`/api/reports/balance-history?startDate=${startDate}&endDate=${endDate}`);
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch balance history');
+                    }
+
+                    const data = await response.json();
+
+                    // Debugging: Log the full response data to the console
+                    console.log('Balance History Response Data:', data);
+
+                    // Extract the dates and balance data from the response
+                    const fullDates = data.map(entry => new Date(entry.date).toLocaleDateString('en-GB'));
+                    const balanceData = data.map(entry => entry.balance);
+
+                    // Debugging: Log the extracted dates and balances to the console
+                    console.log('Extracted Dates:', fullDates);
+                    console.log('Extracted Balances:', balanceData);
+
+                    // Determine the number of labels to display on the x-axis (e.g., 7 labels)
+                    const labelCount = 7;
+
+                    // Function to select evenly spaced dates from the fullDates array
+                    function selectLabels(dates, count) {
+                        const selected = [];
+                        const step = Math.max(Math.floor(dates.length / count), 1);
+                        for (let i = 0; i < dates.length; i += step) {
+                            selected.push(dates[i]);
+                        }
+                        if (selected[selected.length - 1] !== dates[dates.length - 1]) {
+                            selected.push(dates[dates.length - 1]);
+                        }
+                        return selected;
+                    }
+
+                    const labels = selectLabels(fullDates, labelCount);
+
+                    const filteredBalanceData = [];
+                    labels.forEach(label => {
+                        const index = fullDates.indexOf(label);
+                        if (index !== -1) {
+                            filteredBalanceData.push(balanceData[index]);
+                        }
+                    });
+
+                    // Destroy the previous chart instance if it exists
+                    if (balanceHistoryChart) {
+                        balanceHistoryChart.destroy();
+                    }
+
+                    // Create the new chart with selected labels and filtered balance data
+                    balanceHistoryChart = new Chart(balanceHistoryChartCtx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Balance',
+                                data: filteredBalanceData,
+                                borderColor: 'rgba(0, 123, 255, 1)',
+                                backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Date'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Balance ($)'
+                                    },
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error fetching balance history:', error);
+                }
+            }
+
+            async function fetchBalance() {
+                try {
+                    const response = await fetch('/api/accounts/balance');
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch balance');
+                    }
+
+                    const data = await response.json();
+                    const balanceElement = document.getElementById('balance');
+                    balanceElement.textContent = `$${data.balance.toFixed(2)}`;
+                    return data.balance;
+                } catch (error) {
+                    console.error('Error fetching balance:', error);
+                    return 0;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

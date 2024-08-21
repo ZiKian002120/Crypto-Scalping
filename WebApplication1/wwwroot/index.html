@@ -1,0 +1,698 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICT Crypto Trading Signals</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.10/signalr.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #D4EFDF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #contentWrapper {
+            background-color: white;
+            padding: 0px 0px;
+            width: 80%;
+            max-width: 1800px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Navigation Bar Styling */
+        .navbar {
+            width: 100%;
+            background-color: #0E6655;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px 8px 0 0;
+        }
+        .navbar-left {
+            display: flex;
+            align-items: center;
+        }
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            margin-right: 20px
+        }
+
+        .navbar a {
+            float: left;
+            color: white;
+            text-align: center;
+            padding: 14px 35px;
+            margin: 0px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+                .navbar a:hover {
+                    background-color: #007a63;
+                    color: white;
+                }
+
+        /* Balance display styling */
+        #balanceContainer {
+            width: 80%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            margin-right: 15px;
+        }
+
+            #balanceContainer i {
+              
+            }
+
+            #balanceContainer img {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+        #logoutLink {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 14px 16px;
+        }
+
+            #logoutLink:hover {
+                background-color: #007a63;
+                color: white;
+            }
+
+        #signalsDisplay {
+            width: 90%;
+            margin: 10px;
+            padding: 20px 84px;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-height: 550px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+            font-size: 18px;
+            text-align: left;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+        }
+
+        th, td {
+            padding: 12px 15px;
+        }
+
+        th {
+            background-color: #009879;
+            color: #ffffff;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+            tr:nth-of-type(even) {
+                background-color: #f3f3f3;
+            }
+
+            tr:last-of-type {
+                border-bottom: 2px solid #009879;
+            }
+
+
+        /* Animation for price increase */
+        .blink-increase {
+            animation: blinkIncreaseEffect 2s ease-in-out;
+        }
+
+        @keyframes blinkIncreaseEffect {
+            0% {
+                background-color: #ccffcc; /* Light green */
+            }
+
+            100% {
+                background-color: transparent;
+            }
+        }
+
+        /* Animation for price decrease */
+        .blink-decrease {
+            animation: blinkDecreaseEffect 2s ease-in-out;
+        }
+
+        @keyframes blinkDecreaseEffect {
+            0% {
+                background-color: #ffcccc; /* Light red */
+            }
+
+            100% {
+                background-color: transparent;
+            }
+        }
+
+        /* Order list styling */
+        #orderListContainer {
+            width: 90%;
+            margin-top: 0px;
+            padding: 20px 80px 40px 100px;
+            min-height: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        #orderTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            min-height: 400px;
+            position: relative;
+        }
+
+            #orderTable tbody::after {
+                content: "";
+                display: block;
+                height: calc(100% - 1em); /* Adjust based on your table header/footer height */
+                min-height: 400px; /* Match this to your table's min-height */
+            }
+
+            #orderTable tr:nth-child(even) {
+                background-color: #f3f3f3;
+            }
+
+            #orderTable tr:last-child {
+                border-bottom: 2px solid #009879;
+            }
+
+            #orderTable th,
+            #orderTable td {
+                padding: 12px 15px;
+                text-align: left;
+                border-bottom: 1px solid #dddddd;
+            }
+
+            #orderTable th {
+                background-color: #009879;
+                color: white;
+                text-transform: uppercase;
+            }
+        #paginationControls{
+            padding-left:40px;
+        }
+
+            #paginationControls button {
+                padding: 5px 10px; /* Adjust padding as needed */
+                margin: 5px; /* Adjust margin between buttons */
+                border: none;
+                background-color: #00b856; /* Button background color */
+                color: white; /* Button text color */
+                cursor: pointer;
+                border-radius: 5px; /* Optional: Round the corners */
+                font-size: 16px; /* Adjust font size */
+            }
+
+                #paginationControls button.active {
+                    background-color: #005f49; /* Different background for active page */
+                }
+
+                #paginationControls button:hover {
+                    background-color: #009879; /* Background on hover */ 
+                }
+
+        .roi-positive {
+            color: green;
+            font-weight: bold;
+        }
+
+        .roi-negative {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Modal Styling */
+        #orderModal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #modalContent {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 300px;
+        }
+
+        #modalButtons {
+            margin-top: 15px;
+        }
+
+            #modalButtons button {
+                margin: 5px;
+                padding: 8px 16px;
+                background-color: #009879;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+                #modalButtons button:hover {
+                    background-color: #007a63;
+                }
+
+        #confirmationModal .modal-content {
+            text-align: center;
+        }
+
+        #confirmationModal button {
+            width: 25%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="contentWrapper">
+        <!-- Navigation Bar -->
+        <div class="navbar">
+            <div class="navbar-left">
+                <a href="/index.html">Home</a>
+                <a href="/orderHistory.html">Order History</a>
+                <a href="/balanceHistory.html">Balance History</a>
+                <a href="/Accounts.html">Accounts</a>
+            </div>
+            <div class="navbar-right">
+                <div id="balanceContainer">
+                    <img src="/images/walletwhite.png" alt="Wallet Icon">
+                    <span id="balance">Loading balance...</span>
+                </div>
+                <a href="login.html" id="logoutLink">Logout</a>
+            </div>
+        </div>
+
+        <div id="signalsDisplay">
+            <h2> ICT Strategy</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th> </th>
+                        <th>Symbol</th>
+                        <th>Signal</th>
+                        <th>Price</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+
+                    </tr>
+                </thead>
+                <tbody id="signalsTableBody">
+                    <!-- Signals will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Order list container -->
+        <div id="orderListContainer">
+            <h2>Active Orders</h2>
+            <ul id="orderList">
+                <!-- Orders will be dynamically inserted here -->
+            </ul>
+            <div id="paginationControls"></div>
+        </div>
+
+        <!-- Order Modal -->
+        <div id="orderModal" style="display: none;">
+            <div id="modalContent">
+                <h3>Confirm Order</h3>
+                <p><strong>Signal:</strong> <span id="modalSignal"></span></p>
+                <p><strong>Action:</strong> <span id="modalAction"></span></p>
+                <p><strong>Symbol:</strong> <span id="modalSymbol"></span></p>
+                <p><strong>Price:</strong> $<span id="modalPrice"></span></p>
+                <label for="amount">Amount to Spend:</label>
+                <input type="number" id="amount" min="0" step="0.01">
+                <div id="modalButtons">
+                    <button id="confirmOrder">Confirm</button>
+                    <button id="cancelOrder">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeConfirmationModal()">&times;</span>
+            <h2 id="confirmationMessage"></h2>
+            <div id="confirmationButtons">
+                <button id="confirmButton">OK</button>
+                <button onclick="closeConfirmationModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+        -->
+    </div>
+        <script>
+            function openOrderModal(signal, action, symbol, price) {
+                document.getElementById('modalSignal').textContent = signal;
+                document.getElementById('modalAction').textContent = action;
+                document.getElementById('modalSymbol').textContent = symbol;
+                document.getElementById('modalPrice').textContent = price;
+                document.getElementById('amount').value = ''; // Clear the previous value
+
+                const modal = document.getElementById('orderModal');
+                modal.style.display = 'flex'; // Show the modal
+
+                fetchBalance().then(balance => {
+                    document.getElementById('confirmOrder').onclick = function () {
+                        const amount = parseFloat(document.getElementById('amount').value);
+                        if (isNaN(amount) || amount <= 0) {
+                            alert('Please enter a valid amount.');
+                            return;
+                        }
+
+                        if (amount > balance) {
+                            alert('Insufficient balance.');
+                            return;
+                        }
+
+                        placeOrder(symbol, action, price, amount);
+                        modal.style.display = 'none'; // Hide the modal after confirming
+                    };
+                });
+
+                document.getElementById('cancelOrder').onclick = function () {
+                    modal.style.display = 'none'; // Hide the modal if canceled
+                };
+
+            }
+
+            function placeOrder(symbol, action, price, amount) {
+                    const order = {
+                        symbol: symbol,
+                        action: action,
+                        entryPrice: price,
+                        orderPrice: amount
+                    };
+                    // Send order to the server
+                    fetch('/api/orders', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(order)
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                alert(`Placed a ${action} order for ${symbol} at ${price}`);
+                                fetchOrders(currentPage); // Refresh the order list after placing an order
+                                fetchBalance();
+                            } else {
+                                alert('Failed to place order');
+                            }
+                        })
+                        .catch(error => console.error('Error placing order:', error));
+            }
+
+            
+            const pageSize = 10; // Set the number of orders per page
+
+            async function fetchOrders(page) {
+                try {
+                    const response = await fetch(`/api/orders?page=${page}&pageSize=10`);
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch orders');
+                    }
+
+                    const data = await response.json();
+
+                    const orders = data.orders || [];
+                    const totalPages = data.totalPages || 1;
+
+                    const orderList = document.getElementById('orderList');
+                    orderList.innerHTML = '';
+
+                    if (orders.length === 0) {
+                        orderList.innerHTML = '<tr><td colspan="8">No active orders found for your account.</td></tr>';
+                        return;
+                    }
+
+                    orders.forEach(order => {
+                        const listItem = document.createElement('tr');
+
+                        const roiClass = (order.roi > 0) ? 'roi-positive' : 'roi-negative';
+                        const profitAndLossClass = (order.profitAndLoss > 0) ? 'roi-positive' : 'roi-negative';
+                        const roiText = order.roi !== null && order.roi !== undefined ? order.roi.toFixed(2) + '%' : '0.00%';
+                        const profitAndLossText = order.profitAndLoss !== null && order.profitAndLoss !== undefined ? `$${order.profitAndLoss.toFixed(2)}` : '$0.00';
+
+                        listItem.innerHTML = `
+                <td>${order.symbol}</td>
+                <td>${order.action}</td>
+                <td>$${order.entryPrice}</td>
+                <td>$${order.orderPrice.toFixed(2)}</td>
+                <td class="${roiClass}">${roiText}</td>
+                <td class="${profitAndLossClass}">${profitAndLossText}</td>
+                <td>${new Date(order.timestamp).toLocaleString()}</td>
+                <td><button onclick="closeOrder(${order.id})">Close</button></td>
+            `;
+
+                        orderList.appendChild(listItem);
+                    });
+
+                    // Update pagination controls
+                    updatePaginationControls(totalPages, page);
+
+                } catch (error) {
+                    console.error('Error fetching orders:', error);
+                }
+            }
+
+            function updatePaginationControls(totalPages, currentPage) {
+                const paginationControls = document.getElementById('paginationControls');
+
+                // If the paginationControls element doesn't exist, return early
+                if (!paginationControls) {
+                    console.error("Pagination controls element not found");
+                    return;
+                }
+
+                paginationControls.innerHTML = ''; // Clear previous pagination
+
+                if (totalPages <= 1) {
+                    return;
+                }
+
+                // Generate pagination controls
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    pageButton.className = i === currentPage ? 'active' : '';
+
+                    pageButton.onclick = () => {
+                        changePage(i); // Fetch orders for the clicked page
+                    };
+
+                    paginationControls.appendChild(pageButton);
+                }
+            }
+
+            function changePage(pageNumber) {
+                currentPage = pageNumber; // Update the current page
+                fetchOrders(currentPage); // Fetch the orders for the selected page
+            }
+
+            async function closeOrder(orderId) {
+                try {
+                    const response = await fetch(`/api/orders/${orderId}/close`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert('Order closed successfully.');
+                        fetchOrders(currentPage);
+                        fetchBalance();
+                    } else {
+                        alert('Failed to close order.');
+                    }
+                } catch (error) {
+                    console.error('Error closing order:', error);
+                }
+            }
+
+            async function fetchBalance() {
+                try {
+                    const response = await fetch('/api/accounts/balance');
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch balance');
+                    }
+
+                    const data = await response.json();
+                    const balanceElement = document.getElementById('balance');
+                    balanceElement.textContent = `$${data.balance.toFixed(2)}`;
+                    return data.balance;
+                } catch (error) {
+                    console.error('Error fetching balance:', error);
+                    return 0;
+                }
+            }
+
+            let currentPage = 1;
+            document.addEventListener("DOMContentLoaded", function () {
+                var connection = new signalR.HubConnectionBuilder()
+                    .withUrl("/priceHub")
+                    .build();
+
+                connection.on("ReceiveTradingSignal", function (signal) {
+                    updateSignal(signal);
+                    fetchOrders(currentPage); 
+                });
+
+                connection.start().catch(function (err) {
+                    return console.error(err.toString());
+                });
+
+                async function fetchICTSignals() {
+                    try {
+                        const response = await fetch(`/api/crypto/ict-signals`);
+                        if (!response.ok) {
+                            throw new Error("Network response was not ok");
+                        }
+                        const signals = await response.json();
+                        displaySignals(signals);
+                    } catch (error) {
+                        console.error("Error fetching ICT signals:", error);
+                    }
+                }
+
+                function updateSignal(signal) {
+                    const signalsTableBody = document.getElementById('signalsTableBody');
+                    let signalElement = document.getElementById(signal.symbol);
+
+                    if (signalElement) {
+                        const priceElement = signalElement.querySelector('.price');
+                        const signalElementSignal = signalElement.querySelector('.signal');
+                        const descriptionElement = signalElement.querySelector('.description');
+
+                        const currentPrice = parseFloat(priceElement.innerText);
+                        const currentSignal = signalElementSignal.innerText;
+
+                        
+                        if (currentPrice !== signal.price) {
+                            priceElement.innerText = signal.price;
+
+                            if (signal.price > currentPrice) {
+                                priceElement.classList.add('blink-increase');
+                                setTimeout(() => {
+                                    priceElement.classList.remove('blink-increase');
+                                }, 2000);
+                            } else if (signal.price < currentPrice) {
+                                priceElement.classList.add('blink-decrease');
+                                setTimeout(() => {
+                                    priceElement.classList.remove('blink-decrease');
+                                }, 2000);
+                            }
+                        }
+
+                        // Check if the signal has changed
+                        if (currentSignal !== signal.signal) {
+                            signalElementSignal.innerText = signal.signal;
+                        }
+
+                        // Update description without animation
+                        descriptionElement.innerText = signal.description;
+                    } else {
+                        // Create a new row
+                        const rowCount = signalsTableBody.children.length + 1;
+                        const row = document.createElement('tr');
+                        row.id = signal.symbol;
+                        row.dataset.index = rowCount;
+                        row.innerHTML = `
+                                                            <td>${rowCount}</td>
+                                                            <td>${signal.symbol}</td>
+                                                            <td class="signal">${signal.signal}</td>
+                                                            <td class="price">${signal.price}</td>
+                                                            <td class="description">${signal.description}</td>
+                                                            <td>
+                                                               <button onclick="openOrderModal('${signal.signal}', 'Buy', '${signal.symbol}', '${signal.price}')">Buy</button>
+                                                               <button onclick="openOrderModal('${signal.signal}', 'Sell', '${signal.symbol}', '${signal.price}')">Sell</button>
+                                                            </td>
+                                                        `;
+                        signalsTableBody.appendChild(row);
+                    }
+                }
+
+                function displaySignals(signals) {
+                    const signalsTableBody = document.getElementById('signalsTableBody');
+                    signals.forEach(signal => {
+                        updateSignal(signal);
+                    });
+                }
+
+                function showConfirmationModal(message, onConfirm) {
+                    const modal = document.getElementById("confirmationModal");
+                    const confirmationMessage = document.getElementById("confirmationMessage");
+                    confirmationMessage.innerText = message;
+                    modal.style.display = "block";
+
+                    const confirmButton = document.getElementById("confirmButton");
+                    confirmButton.onclick = () => {
+                        closeConfirmationModal();
+                        if (onConfirm) onConfirm();
+                    };
+                }
+
+                function closeConfirmationModal() {
+                    const modal = document.getElementById("confirmationModal");
+                    modal.style.display = "none";
+                }
+
+                // Interval for automatic updates
+                var updateInterval = 5000;
+                setInterval(() => fetchICTSignals(), updateInterval);
+                setInterval(() => fetchOrders(currentPage), updateInterval);
+
+                // Initial call signals & orders
+                fetchICTSignals();
+                fetchOrders(currentPage);
+                fetchBalance();
+            });
+        </script>
+
+</body>
+</html>

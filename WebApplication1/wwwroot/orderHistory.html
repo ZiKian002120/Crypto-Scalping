@@ -1,0 +1,774 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order History</title>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.10/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #D4EFDF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #contentWrapper {
+            background-color: white;
+            padding: 0px 0px;
+            width: 80%;
+            max-width: 1800px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Navigation Bar Styling */
+        .navbar {
+            width: 100%;
+            background-color: #0E6655;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            margin-right: 20px
+        }
+
+        .navbar a {
+            float: left;
+            color: white;
+            text-align: center;
+            padding: 14px 35px;
+            margin: 0px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+            .navbar a:hover {
+                background-color: #007a63;
+                color: white;
+            }
+
+        /* Balance display styling */
+        #balanceContainer {
+            width: 80%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            margin-right: 15px;
+        }
+
+            #balanceContainer i {
+            }
+
+            #balanceContainer img {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+
+        #logoutLink {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 14px 16px;
+        }
+
+            #logoutLink:hover {
+                background-color: #007a63;
+                color: white;
+            }
+
+            label {
+                margin-right: 10px;
+                font-weight: bold;
+            }
+
+            input {
+                margin-right: 10px;
+                padding: 5px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+
+        h1 {
+            text-align: center;
+            color: #009879;
+        }
+
+        #content {
+            margin: auto;
+            background-color: #fff;
+            padding: 44px;
+            min-height: 800px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-height: 1000px; 
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 18px;
+            text-align: left;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;       
+        }
+
+        th, td {
+            padding: 12px 15px;
+        }
+
+        th {
+            background-color: #009879;
+            color: #ffffff;
+            text-transform: uppercase;
+            position: sticky;
+            z-index: 1;
+        }
+
+        tr {
+            border-bottom: 1px solid #dddddd;
+            height: 50px;
+        }
+
+        td {
+            padding: 5px 10px;
+            overflow: hidden; 
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+            tr:nth-of-type(even) {
+                background-color: #f3f3f3;
+            }
+
+            tr:last-of-type {
+                border-bottom: 2px solid #009879;
+            }
+
+            tr:hover {
+                background-color: #f1f1f1;
+            }
+
+            #paginationControls button {
+                padding: 5px 10px; /* Adjust padding as needed */
+                margin: 5px; /* Adjust margin between buttons */
+                border: none;
+                background-color: #00b856; /* Button background color */
+                color: white; /* Button text color */
+                cursor: pointer;
+                border-radius: 5px; /* Optional: Round the corners */
+                font-size: 16px; /* Adjust font size */
+            }
+
+                #paginationControls button.active {
+                    background-color: #005f49; /* Different background for active page */
+                }
+
+                #paginationControls button:hover {
+                    background-color: #009879; /* Background on hover */
+                }
+
+        /* Performance Report and Chart Section */
+        #reportAndChartContainer {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        #performanceReport {
+            width: 40%;
+            margin-right: 20px;
+            
+        }
+
+        #chartContainer {
+            width: 60%;
+            display: none; /* Initially hide the chart container */
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            max-width: 70%;
+            max-height: 400px;
+        }
+
+        /* Report Buttons */
+        #reportButtons {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+            #reportButtons button {
+                padding: 10px 20px;
+                background-color: #009879;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+                #reportButtons button:hover {
+                    background-color: #007a63;
+                }
+
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+    </style>
+</head>
+<body>
+    <div id="contentWrapper">
+        <!-- Navigation Bar -->
+        <div class="navbar">
+            <div class="navbar-left">
+                <a href="/index.html">Home</a>
+                <a href="/orderHistory.html">Order History</a>
+                <a href="/balanceHistory.html">Balance History</a>
+                <a href="/Accounts.html">Accounts</a>
+            </div>
+            <div class="navbar-right">
+                <div id="balanceContainer">
+                    <img src="/images/walletwhite.png" alt="Wallet Icon">
+                    <span id="balance">Loading balance...</span>
+                </div>
+                <a href="login.html" id="logoutLink">Logout</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <!--
+                <h1>Balance History</h1>
+            <div id="balanceHistorySection">
+                <h2>Balance History</h2>
+                <div id="balanceHistoryControls">
+                    <label for="balanceStartDate">Start Date:</label>
+                    <input type="date" id="balanceStartDate">
+                    <label for="balanceEndDate">End Date:</label>
+                    <input type="date" id="balanceEndDate">
+                    <button id="fetchBalanceHistoryButton">Fetch Balance History</button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="balanceHistoryChart"></canvas>
+                </div>
+            </div> -->
+
+            <h1>Order History</h1>
+
+            <div id="reportButtons">
+                <div id="datePickerContainer">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate">
+                    <button id="generateReportButton">Generate Report</button>
+                </div>
+            </div>
+
+            <table id="orderHistoryTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Symbol</th>
+                        <th>Action</th>
+                        <th>Entry Price</th>
+                        <th>Order Price</th>
+                        <th>ROI%</th>
+                        <th>Profit/Loss</th>
+                        <th>Status</th>
+                        <th>Timestamp</th>
+                        <th>Closed Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Orders will be dynamically inserted here -->
+                </tbody>
+            </table>
+            <div id="paginationControls"></div>
+        </div>
+
+        <!-- Modal Structure -->
+        <div id="performanceModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="reportAndChartContainer">
+                    <!-- Performance Report -->
+                    <div id="performanceReport"></div>
+
+                    <!-- Chart Selection -->
+                    <div id="chartContainer">
+                        <div>
+                            <label><input type="radio" name="chartType" value="roi" checked> ROI Over Time</label>
+                            <label><input type="radio" name="chartType" value="tradingPair"> Trading Pair Distribution</label>
+                            <label><input type="radio" name="chartType" value="profitLoss"> Profit/Loss per Trade</label>
+                        </div>
+                        <div class="chart-container" id="roiChartContainer">
+                            <canvas id="roiChart"></canvas>
+                        </div>
+                        <div class="chart-container" id="tradingPairChartContainer" style="display:none;">
+                            <canvas id="tradingPairChart"></canvas>
+                        </div>
+                        <div class="chart-container" id="profitLossChartContainer" style="display:none;">
+                            <canvas id="profitLossChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+        <script>
+            let currentPage = 1;
+            const pageSize = 10;
+            document.addEventListener("DOMContentLoaded", function () {
+                fetchOrderHistory(currentPage, pageSize);
+                fetchBalance();
+                // Attach event listeners to date inputs
+                document.getElementById('startDate').addEventListener('change', function () {
+                    currentPage = 1;
+                    filterOrderHistory(currentPage, pageSize);
+                });
+                document.getElementById('endDate').addEventListener('change', function () {
+                    currentPage = 1;
+                    filterOrderHistory(currentPage, pageSize);
+                });
+
+                var modal = document.getElementById("performanceModal");
+                var span = document.getElementsByClassName("close")[0];
+
+                
+                document.getElementById('generateReportButton').addEventListener('click', function () {
+                    const startDate = document.getElementById('startDate').value;
+                    const endDate = document.getElementById('endDate').value;
+
+                    if (startDate && endDate) {
+                        if (new Date(startDate) > new Date(endDate)) {
+                            alert('End date cannot be earlier than start date.');
+                        } else {
+                            generatePerformanceReport(startDate, endDate);
+                            modal.style.display = "block";
+                        }
+                    } else {
+                        alert('Please select both start and end dates.');
+                    }
+                });
+                
+                span.onclick = function () {
+                    modal.style.display = "none";
+                }
+                
+                window.onclick = function (event) {
+                    if (event.target == modal) {
+                        modal.style.display = "none";
+                    }
+                }
+
+                // Chart selection logic
+                document.querySelectorAll('input[name="chartType"]').forEach((elem) => {
+                    elem.addEventListener('change', function (event) {
+                        const selectedChart = event.target.value;
+                        document.getElementById('roiChartContainer').style.display = selectedChart === 'roi' ? 'block' : 'none';
+                        document.getElementById('tradingPairChartContainer').style.display = selectedChart === 'tradingPair' ? 'block' : 'none';
+                        document.getElementById('profitLossChartContainer').style.display = selectedChart === 'profitLoss' ? 'block' : 'none';
+                    });
+                });
+            });
+
+            async function fetchBalance() {
+                try {
+                    const response = await fetch('/api/accounts/balance');
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch balance');
+                    }
+
+                    const data = await response.json();
+                    const balanceElement = document.getElementById('balance');
+                    balanceElement.textContent = `$${data.balance.toFixed(2)}`;
+                    return data.balance;
+                } catch (error) {
+                    console.error('Error fetching balance:', error);
+                    return 0;
+                }
+            }
+            async function fetchOrderHistory(page = 1, pageSize = 10) {
+                try {
+                    const response = await fetch(`/api/reports/performance?startDate=${startDate}&endDate=${endDate}&page=${page}&pageSize=${pageSize}`);
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch order history');
+                    }
+
+                    const data = await response.json();
+                    const orders = data.orders || [];
+                    const totalPages = data.totalPages || 1;
+
+                    const orderHistoryTableBody = document.getElementById('orderHistoryTable').querySelector('tbody');
+                    orderHistoryTableBody.innerHTML = '';
+
+                    if (orders.length === 0) {
+                        orderHistoryTableBody.innerHTML = '<tr><td colspan="10">No orders found.</td></tr>';
+                        return;
+                    }
+
+                    orders.forEach((order, index) => {
+                        const listItem = document.createElement('tr');
+
+                        const roiClass = (order.roi > 0) ? 'roi-positive' : 'roi-negative';
+                        const profitAndLossClass = (order.profitAndLoss > 0) ? 'roi-positive' : 'roi-negative';
+                        const roiText = order.roi !== null && order.roi !== undefined ? order.roi.toFixed(2) + '%' : '0.00%';
+                        const profitAndLossText = order.profitAndLoss !== null && order.profitAndLoss !== undefined ? `$${order.profitAndLoss.toFixed(2)}` : '$0.00';
+
+                        listItem.innerHTML = `
+                                            <td>${(page - 1) * pageSize + index + 1}</td>
+                                            <td>${order.symbol}</td>
+                                            <td>${order.action}</td>
+                                            <td>$${order.entryPrice}</td>
+                                            <td>$${order.orderPrice.toFixed(2)}</td>
+                                            <td class="${roiClass}">${roiText}</td>
+                                            <td class="${profitAndLossClass}">${profitAndLossText}</td>
+                                            <td>${order.status === 0 ? 'Active' : 'Closed'}</td>
+                                            <td>${new Date(order.timestamp).toLocaleString()}</td>
+                                            <td>${order.closedTime ? new Date(order.closedTime).toLocaleString() : '-'}</td>
+                                        `;
+
+                        orderHistoryTableBody.appendChild(listItem);
+                    });
+
+                    updatePaginationControls(totalPages, page);
+
+                } catch (error) {
+                    console.error('Error fetching order history:', error);
+                }
+            }
+
+            async function filterOrderHistory(page = 1, pageSize = 10) {
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+
+                let url = `api/reports/performance?page=${page}&pageSize=${pageSize}`;
+                if (startDate && endDate) {
+                    if (new Date(startDate) > new Date(endDate)) {
+                        alert('End date cannot be earlier than start date.');
+                        return;
+                    }
+                    url += `&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+                }
+
+                console.log("Fetching URL:", url); // Debug URL
+
+                try {
+                    const response = await fetch(url);
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch order history');
+                    }
+
+                    const data = await response.json();
+
+                    if (data.orders && data.orders.length > 0) {
+                        updateOrderHistoryTable(data.orders, page, pageSize);
+                        updatePaginationControls(data.totalPages, page);  // Update pagination based on filtered results
+                    } else {
+                        console.log("No orders found for the selected period.");
+                        document.getElementById('orderHistoryTable').querySelector('tbody').innerHTML = '<tr><td colspan="10">No orders found for the selected period.</td></tr>';
+                    }
+
+                    console.log("Fetched Data:", data);
+
+                } catch (error) {
+                    console.error('Error fetching order history:', error);
+                }
+            }
+
+            function updateOrderHistoryTable(orders, currentPage = 1, pageSize = 10) {
+                
+                const orderHistoryTableBody = document.getElementById('orderHistoryTable').querySelector('tbody');
+                orderHistoryTableBody.innerHTML = '';
+
+                console.log("Updating table with orders:", orders); // Debug orders data
+
+                if (!orders || orders.length === 0) {
+                    orderHistoryTableBody.innerHTML = '<tr><td colspan="10">No orders found for the selected period.</td></tr>';
+                    return;
+                }
+
+                orders.forEach((order, index) => {
+                    const listItem = document.createElement('tr');
+
+                    const roiClass = (order.roi > 0) ? 'roi-positive' : 'roi-negative';
+                    const profitAndLossClass = (order.profitAndLoss > 0) ? 'roi-positive' : 'roi-negative';
+                    const roiText = order.roi !== null && order.roi !== undefined ? order.roi.toFixed(2) + '%' : '0.00%';
+                    const profitAndLossText = order.profitAndLoss !== null && order.profitAndLoss !== undefined ? `$${order.profitAndLoss.toFixed(2)}` : '$0.00';
+
+                    listItem.innerHTML = `
+                    <td>${(currentPage - 1) * pageSize + index + 1}</td>
+                    <td>${order.symbol}</td>
+                    <td>${order.action}</td>
+                    <td>$${order.entryPrice}</td>
+                    <td>$${order.orderPrice.toFixed(2)}</td>
+                    <td class="${roiClass}">${roiText}</td>
+                    <td class="${profitAndLossClass}">${profitAndLossText}</td>
+                    <td>${order.status === 0 ? 'Active' : 'Closed'}</td>
+                    <td>${new Date(order.timestamp).toLocaleString()}</td>
+                    <td>${order.closedTime ? new Date(order.closedTime).toLocaleString() : '-'}</td>
+                `;
+
+                    orderHistoryTableBody.appendChild(listItem);
+                });
+            }
+
+            function updatePaginationControls(totalPages, currentPage) {
+                const paginationControls = document.getElementById('paginationControls');
+                paginationControls.innerHTML = '';
+
+                if (totalPages <= 1) {
+                    return; // No need for pagination controls if there's only one page
+                }
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    pageButton.className = i === currentPage ? 'active' : '';
+                    pageButton.onclick = () => {
+                        filterOrderHistory(i, 10, startDate, endDate);
+                    };
+
+                    paginationControls.appendChild(pageButton);
+                }
+            }
+
+            async function generatePerformanceReport(startDate, endDate) {
+                let allOrders = [];
+                let currentPage = 1;
+                let totalPages = 1;
+                let lastReport = null;
+
+                // Fetch data page by page until all pages are retrieved
+                do {
+                    const response = await fetch(`/api/reports/performance?startDate=${startDate}&endDate=${endDate}&page=${currentPage}&pageSize=10`);
+                    if (!response.ok) {
+                        console.error('Error fetching performance report:', response.statusText);
+                        return;
+                    }
+                    console.log("reponse from api:", response);
+                    const report = await response.json();
+
+                    // Store the last fetched report
+                    lastReport = report;
+
+                    // Combine orders from the current page
+                    allOrders = allOrders.concat(report.Orders);
+
+                    // Set totalPages and increment currentPage
+                    totalPages = report.TotalPages;
+                    currentPage++;
+                } while (currentPage <= totalPages);
+
+                if (lastReport) {
+                    // Reuse the last fetched report object and update it with combined data
+                    const finalReport = {
+                        ...lastReport,
+                        Orders: allOrders,
+                        TotalTrades: allOrders.length,
+                        Wins: allOrders.filter(o => o && o.Roi > 0).length,
+                        Losses: allOrders.filter(o => o && o.Roi <= 0).length,
+                        AverageRoi: allOrders.reduce((sum, order) => sum + ((order && order.Roi) ?? 0), 0) / allOrders.length,
+                        TotalProfitLoss: allOrders.reduce((sum, order) => sum + ((order && order.ProfitAndLoss) ?? 0), 0),
+                        BestTrade: allOrders.reduce((max, order) => (order && order.Roi > max.Roi ? order : max), allOrders[0]),
+                        WorstTrade: allOrders.reduce((min, order) => (order && order.Roi < min.Roi ? order : min), allOrders[0]),
+                        TradeSymbols: allOrders.map(o => (o && o.Symbol) ?? "N/A"),
+                        RoiValues: allOrders.map(o => (o && o.Roi) ?? 0),
+                        ProfitLossValues: allOrders.map(o => (o && o.ProfitAndLoss) ?? 0)
+                    }
+
+                    // Log the final combined report object for debugging
+                    console.log("Final report object:", finalReport);
+
+                    // Display report data
+                    displayPerformanceReport(finalReport);
+
+                    // Render charts
+                    renderCharts(finalReport);
+                } else {
+                    console.error('No report data was fetched.');
+                }
+            }
+
+            function displayPerformanceReport(report) {
+                const reportContainer = document.getElementById('performanceReport');
+                reportContainer.innerHTML = '';  // Clear previous report
+
+                const totalTrades = report.totalTrades ?? 0;
+                const wins = report.wins ?? 0;
+                const losses = report.losses ?? 0;
+                const averageRoi = report.averageRoi ?? 0;
+                const totalProfitLoss = report.totalProfitLoss ?? 0;
+                const bestTrade = report.bestTrade ?? 'N/A';
+                const worstTrade = report.worstTrade ?? 'N/A';
+
+                reportContainer.innerHTML = `
+                        <h3>Performance Report</h3>
+                        <p><strong>Total Trades:</strong> ${totalTrades}</p>
+                        <p><strong>Wins:</strong> ${wins}</p>
+                        <p><strong>Losses:</strong> ${losses}</p>
+                        <p><strong>Average ROI:</strong> ${averageRoi.toFixed(2)}%</p>
+                        <p><strong>Total Profit/Loss:</strong> $${totalProfitLoss.toFixed(2)}</p>
+                        <p><strong>Best Trade:</strong> ${bestTrade}</p>
+                        <p><strong>Worst Trade:</strong> ${worstTrade}</p>
+                    `;
+
+
+                document.getElementById('chartContainer').style.display = 'block';
+            }
+
+            let roiChartInstance;
+            let tradingPairChartInstance;
+            let profitLossChartInstance;
+
+            function renderCharts(finalReport) {
+
+                if (roiChartInstance) roiChartInstance.destroy();
+                if (tradingPairChartInstance) tradingPairChartInstance.destroy();
+                if (profitLossChartInstance) profitLossChartInstance.destroy();
+
+                const roiCtx = document.getElementById('roiChart').getContext('2d');
+                const tradingPairCtx = document.getElementById('tradingPairChart').getContext('2d');
+                const profitLossCtx = document.getElementById('profitLossChart').getContext('2d');
+
+                const tradeSymbols = finalReport.tradeSymbols;
+                console.log("Trade Symbols:", tradeSymbols);
+
+
+                // ROI Over Time Line Chart
+                roiChartInstance = new Chart(roiCtx, {
+                    type: 'line',
+                    data: {
+                        labels: finalReport.tradeSymbols,
+                        datasets: [{
+                            label: 'ROI',
+                            data: finalReport.roiValues,
+                            borderColor: 'rgba(0, 56, 173, 1)',
+                            borderWidth: 2
+                        }]
+                    }
+                });
+
+                // Trading Paris doughnut Chart
+                const tradingPairCounts = finalReport.tradeSymbols.reduce((acc, symbol) => {
+                    acc[symbol] = (acc[symbol] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const tradingPairLabels = Object.keys(tradingPairCounts);
+                const tradingPairData = Object.values(tradingPairCounts);
+
+                tradingPairChartInstance = new Chart(tradingPairCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: tradingPairLabels,
+                        datasets: [{
+                            data: tradingPairData,
+                            backgroundColor: tradingPairLabels.map((_, index) => `hsl(${index * 80}, 70%, 60%)`)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        title: {
+                            display: true,
+                            text: 'Trading Pair Distribution'
+                        }
+                    }
+                });
+
+                // Profit/Loss Bar Chart
+                profitLossChartInstance = new Chart(profitLossCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: finalReport.tradeSymbols,
+                        datasets: [{
+                            label: 'Profit/Loss',
+                            data: finalReport.profitLossValues,
+                            backgroundColor: finalReport.profitLossValues.map(value => value >= 0 ? 'green' : 'red'),
+                            borderWidth: 1
+                        }]
+                    }
+                });
+            }
+
+
+            function generateDetailedOrderReport() {
+                // Code to generate the detailed order report
+                console.log('Generating Detailed Order Report...');
+                // Implement the logic to display the detailed order report
+            }
+
+
+        </script>
+</body>
+</html>

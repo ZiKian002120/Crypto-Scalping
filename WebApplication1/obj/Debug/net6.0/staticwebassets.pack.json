@@ -1,0 +1,53 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\Accounts.html",
+      "PackagePath": "staticwebassets\\Accounts.html"
+    },
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\balanceHistory.html",
+      "PackagePath": "staticwebassets\\balanceHistory.html"
+    },
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\images\\wallet.jpg",
+      "PackagePath": "staticwebassets\\images\\wallet.jpg"
+    },
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\images\\walleticon.png",
+      "PackagePath": "staticwebassets\\images\\walleticon.png"
+    },
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\images\\walletwhite.png",
+      "PackagePath": "staticwebassets\\images\\walletwhite.png"
+    },
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\login.html",
+      "PackagePath": "staticwebassets\\login.html"
+    },
+    {
+      "Id": "D:\\0. New FYP Project\\Crypto Project\\WebApplication1\\wwwroot\\orderHistory.html",
+      "PackagePath": "staticwebassets\\orderHistory.html"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.WebApplication1.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.build.WebApplication1.props",
+      "PackagePath": "build\\WebApplication1.props"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.buildMultiTargeting.WebApplication1.props",
+      "PackagePath": "buildMultiTargeting\\WebApplication1.props"
+    },
+    {
+      "Id": "obj\\Debug\\net6.0\\staticwebassets\\msbuild.buildTransitive.WebApplication1.props",
+      "PackagePath": "buildTransitive\\WebApplication1.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

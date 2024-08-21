@@ -1,0 +1,780 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #D4EFDF;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #contentWrapper {
+            background-color: white;
+            padding: 0px 0px;
+            width: 80%;
+            max-width: 1800px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Navigation Bar Styling */
+        .navbar {
+            width: 100%;
+            background-color: #0E6655;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            margin-right: 20px
+        }
+
+        .navbar a {
+            float: left;
+            color: white;
+            text-align: center;
+            padding: 14px 35px;
+            margin: 0px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+            .navbar a:hover {
+                background-color: #007a63;
+                color: white;
+            }
+
+        /* Balance display styling */
+        #balanceContainer {
+            width: 80%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            margin-right: 15px;
+        }
+
+            #balanceContainer i {
+            }
+
+            #balanceContainer img {
+                width: 40px;
+                height: 40px;
+                margin-right: 10px;
+            }
+
+        #logoutLink {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 14px 16px;
+        }
+
+            #logoutLink:hover {
+                background-color: #007a63;
+                color: white;
+            }
+
+        h1 {
+            text-align: center;
+            color: #009879;
+        }
+
+        .account-management {
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            min-height: 800px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /*User Edit Account*/
+        #userAccountSection {
+            margin-top: 20px;
+            padding: 20px 80px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+
+            #userAccountSection h2 {
+                text-align: center;
+                color: #009879;
+                margin-bottom: 20px;
+            }
+
+            #userAccountSection input {
+                width: 100%;
+                padding: 10px;
+                margin: 10px 0;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                box-sizing: border-box;
+            }
+
+            #userAccountSection button {
+                width: 100%;
+                padding: 10px;
+                background-color: #009879;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+                #userAccountSection button:hover {
+                    background-color: #007a63;
+                }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+            .form-group label {
+                width: 150px; /* Adjust the width as needed */
+                margin-right: 10px;
+            }
+
+            .form-group input {
+                flex: 1;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+            }
+
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #009879;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+            button:hover {
+                background-color: #007a63;
+            }
+            
+        #adminControls{
+            margin: 40px 0px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #009879;
+            color: white;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+            .button-container button {
+                padding: 10px 15px;
+                background-color: #009879;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+                .button-container button:hover {
+                    background-color: #007a63;
+                }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%;
+            border-radius: 10px;
+        }
+
+            .modal-content input {
+                width: 100%;
+                padding: 10px;
+                margin: 10px 0;
+                box-sizing: border-box;
+            }
+
+            .modal-content button {
+                width: 100%;
+                padding: 10px;
+                background-color: #009879;
+                color: white;
+                border: none;
+                cursor: pointer;
+                border-radius: 5px;
+            }
+
+                .modal-content button:hover {
+                    background-color: #007a63;
+                }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        #confirmationModal .modal-content {
+            text-align: center;
+        }
+
+        #confirmationModal button {
+            width: 25%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="contentWrapper">
+        <!-- Navigation Bar -->
+        <div class="navbar">
+            <div class="navbar-left">
+                <a href="/index.html">Home</a>
+                <a href="/orderHistory.html">Order History</a>
+                <a href="/balanceHistory.html">Balance History</a>
+                <a href="/Accounts.html">Accounts</a>
+            </div>
+            <div class="navbar-right">
+                <div id="balanceContainer">
+                    <img src="/images/walletwhite.png" alt="Wallet Icon">
+                    <span id="balance">Loading balance...</span>
+                </div>
+                <a href="login.html" id="logoutLink">Logout</a>
+            </div>
+        </div>
+        <div class="account-management">
+            <h1>Account Management</h1>
+
+            <!-- User Account Edit Section -->
+            <div id="userAccountSection">
+                <h2>Edit Profile</h2>
+                <input id="userId" type="text" hidden />
+                <div class="form-group">
+                    <label for="userRole">Role:</label>
+                    <input type="text" id="userRole" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="userUsername">Username:</label>
+                    <input type="text" id="userUsername" placeholder="Username">
+                </div>
+                <div class="form-group">
+                    <label for="userEmail">Email Address:</label>
+                    <input type="email" id="userEmail" placeholder="Email">
+                </div>
+                <div id="passwordFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password:</label>
+                        <input type="password" id="currentPassword">
+                    </div>
+                    <div class="form-group">
+                        <label for="userPassword">New Password:</label>
+                        <input type="password" id="userPassword">
+                    </div>
+                </div>
+                <button onclick="updateUserAccount()">Save Changes</button>
+                <button type="button" onclick="togglePasswordFields()">Reset Password</button>
+            </div>
+
+            <!-- Admin Controls -->
+            <div id="adminControls" style="display: none;">
+                <div class="button-container">
+                    <button onclick="openModal('add')">Add Account</button>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Role</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Balance</th>
+                            <th>Deposit / Withdraw</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="accountTableBody">
+                        <!-- Accounts will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Modal for Add/Edit Account -->
+    <div id="accountModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Add Account</h2>
+            <input type="hidden" id="accountId">
+            <input type="text" id="role" placeholder="Role (e.g., Admin, Member)">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <input type="email" id="email" placeholder="Email">
+            <!--  <input type="number" id="balance" placeholder="Balance">-->
+            <button onclick="saveAccount()">Save</button>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDepositModal()">&times;</span>
+            <h2>Deposit</h2>
+            <input type="hidden" id="depositAccountId">
+            <input type="number" id="depositAmount" placeholder="Amount">
+            <button onclick="processDeposit()">Deposit</button>
+        </div>
+    </div>
+
+    <!-- Withdrawal Modal -->
+    <div id="withdrawalModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeWithdrawalModal()">&times;</span>
+            <h2>Withdraw</h2>
+            <input type="hidden" id="withdrawalAccountId">
+            <input type="number" id="withdrawalAmount" placeholder="Amount">
+            <button onclick="processWithdrawal()">Withdraw</button>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeConfirmationModal()">&times;</span>
+            <h2 id="confirmationMessage"></h2>
+            <div id="confirmationButtons">
+                <button id="confirmButton">OK</button>
+                <button onclick="closeConfirmationModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let accounts = [];
+
+        document.addEventListener("DOMContentLoaded", function () {
+            fetchUserDetails();
+            fetchBalance();
+
+            // If the user is an admin, show admin controls
+            const userRole = document.getElementById('userRole').value;
+            if (userRole === 'Admin') {
+                document.getElementById('adminControls').style.display = 'block';
+                document.getElementById('userAccountSection').style.display = 'none';
+                fetchAccounts();
+            }
+
+        });
+
+        async function fetchUserDetails() {
+            try {
+                const response = await fetch('/api/accounts/user-details'); // Assuming an endpoint for fetching current user details
+                const user = await response.json();
+
+                document.getElementById('userId').value = user.id;
+                document.getElementById('userRole').value = user.role;
+                document.getElementById('userUsername').value = user.username;
+                document.getElementById('userEmail').value = user.email;
+
+                // Check if the user is an admin
+                if (user.role === 'Admin') {
+
+                    document.getElementById('adminControls').style.display = 'block';
+                    fetchAccounts(); // Fetch all accounts for admin management
+                }
+            } catch (error) {
+                console.error('Error fetching user details:', error);
+            }
+        }
+
+        function updateUserAccount() {
+            const userId = document.getElementById('userId').value;
+            const username = document.getElementById('userUsername').value;
+            const email = document.getElementById('userEmail').value;
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('userPassword').value;
+
+            const userAccount = {
+                id: userId,
+                username,
+                email
+            };
+
+            // Check if the password fields are visible
+            const passwordFieldsVisible = document.getElementById('passwordFields').style.display !== 'none';
+
+            if (passwordFieldsVisible) {
+                if (!currentPassword) {
+                    alert('Please enter your current password.');
+                    return;
+                }
+
+                // Include passwords in the userAccount object
+                userAccount.currentPassword = currentPassword;
+                userAccount.newPassword = newPassword;
+
+                // Validate current password before updating
+                fetch(`/api/accounts/${userId}/validate-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ currentPassword })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Current password is incorrect.');
+                        }
+                        return fetch(`/api/accounts/${userId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(userAccount)
+                        });
+                    })
+                    .then(response => response.json())
+                    .then(() => {
+                        alert('Account updated successfully!');
+                        fetchUserDetails();
+                    })
+                    .catch(error => alert(error.message || 'Error updating account.'));
+            } else {
+                // If password fields are not visible, only update username and email
+                fetch(`/api/accounts/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userAccount)
+                })
+                    .then(response => response.json())
+                    .then(() => {
+                        alert('Account updated successfully!');
+                        fetchUserDetails();
+                    })
+                    .catch(error => alert('Error updating account.'));
+            }
+        }
+
+        async function fetchBalance() {
+            try {
+                const response = await fetch('/api/accounts/balance');
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch balance');
+                }
+
+                const data = await response.json();
+                const balanceElement = document.getElementById('balance');
+                balanceElement.textContent = `$${data.balance.toFixed(2)}`;
+                return data.balance;
+            } catch (error) {
+                console.error('Error fetching balance:', error);
+                return 0;
+            }
+        }
+
+        function fetchAccounts() {
+            fetch('/api/accounts')  // Adjust the API endpoint according to your backend routing
+                .then(response => response.json())
+                .then(data => {
+                    accounts = data; // Assuming 'data' is an array of accounts
+                    renderAccounts();
+                })
+                .catch(error => console.error('Error fetching accounts:', error));
+        }
+
+        function openModal(type, accountId = null) {
+            const modal = document.getElementById("accountModal");
+            const modalTitle = document.getElementById("modalTitle");
+            const accountIdField = document.getElementById("accountId");
+            const roleField = document.getElementById("role");
+            const usernameField = document.getElementById("username");
+            const passwordField = document.getElementById("password");
+            const emailField = document.getElementById("email");
+
+
+            if (type === 'add') {
+                modalTitle.innerText = "Add Account";
+                accountIdField.value = "";
+                roleField.value = "";
+                usernameField.value = "";
+                passwordField.value = "";
+                emailField.value = "";
+            } else if (type === 'edit') {
+                const account = accounts.find(acc => acc.id === accountId);
+                modalTitle.innerText = "Edit Account";
+                accountIdField.value = account.id;
+                roleField.value = account.role;
+                usernameField.value = account.username;
+                passwordField.value = account.password;
+                emailField.value = account.email;
+            }
+
+            modal.style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("accountModal").style.display = "none";
+        }
+
+        function saveAccount() {
+            const accountId = document.getElementById("accountId").value;
+            const role = document.getElementById("role").value;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const email = document.getElementById("email").value;
+
+            const account = {
+                role,
+                username,
+                password,
+                email
+            };
+
+            showConfirmationModal(accountId ? 'Confirm update account?' : 'Confirm create account?', () => {
+                let url = '/api/accounts';
+                let method = 'POST';
+
+                if (accountId) {
+                    url += `/${accountId}`;
+                    method = 'PUT';
+                    account.id = parseInt(accountId);
+                }
+
+                fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(account)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        closeModal();
+                        showConfirmationModal('Account saved successfully!');
+                        fetchAccounts();
+                    })
+                    .catch(error => {
+                        console.error('Error saving account:', error);
+                        showConfirmationModal('Failed to save account.');
+                    });
+            });
+        }
+
+
+        function renderAccounts() {
+            const accountTableBody = document.getElementById("accountTableBody");
+            accountTableBody.innerHTML = "";
+
+            accounts.forEach(account => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                                            <td>${account.id}</td>
+                                            <td>${account.role}</td>
+                                            <td>${account.username}</td>
+                                            <td>${account.email}</td>
+                                            <td>
+                                            $${account.balance.toFixed(2)}
+                                            </td>
+                                            <td>
+                                                <button onclick="openTransactionModal('deposit', ${account.id})">Deposit</button>
+                                                <button onclick="openTransactionModal('withdrawal', ${account.id})">Withdraw</button>
+                                            </td>
+                                            <td>
+                                                <button onclick="openModal('edit', ${account.id})">Edit</button>
+                                                ${account.role !== 'Admin' ? `<button onclick="deleteAccount(${account.id})">Delete</button>` : ''}
+                                            </td>
+                                        `;
+                accountTableBody.appendChild(row);
+            });
+        }
+
+        function deleteAccount(accountId) {
+            showConfirmationModal('Confirm delete account?', () => {
+                fetch(`/api/accounts/${accountId}`, {
+                    method: 'DELETE',
+                })
+                    .then(() => {
+                        showConfirmationModal('Account deleted successfully!');
+                        fetchAccounts();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting account:', error);
+                        showConfirmationModal('Failed to delete account.');
+                    });
+            });
+        }
+
+        function openTransactionModal(type, accountId) {
+            
+            const modalTitle = type === 'deposit' ? 'Deposit' : 'Withdraw';
+            const modalId = type === 'deposit' ? 'depositModal' : 'withdrawalModal';
+            const accountFieldId = type === 'deposit' ? 'depositAccountId' : 'withdrawalAccountId';
+
+            // Set the title and account ID in the modal
+            document.getElementById(accountFieldId).value = accountId;
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeDepositModal() {
+            document.getElementById('depositModal').style.display = 'none';
+        }
+
+        function closeWithdrawalModal() {
+            document.getElementById('withdrawalModal').style.display = 'none';
+        }
+
+        function processDeposit() {
+            const accountId = document.getElementById('depositAccountId').value;
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+
+            fetch(`/api/accounts/${accountId}/deposit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to process deposit');
+                    }
+                    return response.text().then(text => text ? JSON.parse(text) : {});
+                })
+                .then(data => {
+                    closeDepositModal();
+                    fetchAccounts();
+                    fetchBalance();
+                    showConfirmationModal('Deposit successful!', () => { });
+                })
+                .catch(error => {
+                    console.error('Error processing deposit:', error);
+                    alert('Failed to process deposit: ' + error.message);
+                });
+        }
+
+        function processWithdrawal() {
+            const accountId = document.getElementById('withdrawalAccountId').value;
+            const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+
+            fetch(`/api/accounts/${accountId}/withdraw`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount })
+            })
+                .then(response => {
+                    return response.json().then(data => {
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Failed to process withdrawal');
+                        }
+                        return data;
+                    });
+                })
+                .then(data => {
+                    closeWithdrawalModal();
+                    fetchAccounts();
+                    fetchBalance();
+                    showConfirmationModal('Withdrawal successful!', () => { });
+                })
+                .catch(error => {
+                    console.error('Error processing withdrawal:', error);
+                    alert('Error: ' + error.message);
+                });
+        }
+
+
+        function showConfirmationModal(message, onConfirm) {
+            const modal = document.getElementById("confirmationModal");
+            const confirmationMessage = document.getElementById("confirmationMessage");
+            confirmationMessage.innerText = message;
+            modal.style.display = "block";
+
+            const confirmButton = document.getElementById("confirmButton");
+            confirmButton.onclick = () => {
+                closeConfirmationModal();
+                if (onConfirm) onConfirm();
+            };
+        }
+
+        function closeConfirmationModal() {
+            const modal = document.getElementById("confirmationModal");
+            modal.style.display = "none";
+        }
+
+        function togglePasswordFields() {
+            const passwordFields = document.getElementById('passwordFields');
+            passwordFields.style.display = passwordFields.style.display === 'none' ? 'block' : 'none';
+        }
+
+        renderAccounts();
+    </script>
+
+</body>
+</html>

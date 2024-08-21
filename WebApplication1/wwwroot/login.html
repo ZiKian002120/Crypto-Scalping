@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #D4EFDF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 500px;
+            height: 280px;
+            text-align: center;
+        }
+
+            .login-container h1 {
+                margin-bottom: 20px;
+                color: #009879;
+            }
+
+            .login-container input[type="text"],
+            .login-container input[type="password"] {
+                width: 90%;
+                padding: 10px;
+                margin: 10px 0;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                box-sizing: border-box;
+            }
+
+            .login-container button {
+                width: 90%;
+                padding: 15px;
+                margin: 10px 0;
+                background-color: #009879;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 15px;
+            }
+
+                .login-container button:hover {
+                    background-color: #007a63;
+                }
+
+            .login-container .error-message {
+                color: red;
+                display: none;
+                margin-top: 10px;
+            }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Login</h1>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button onclick="login()">Login</button>
+        <p class="error-message" id="errorMessage">Invalid username or password</p>
+    </div>
+
+    <script>
+        function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            const loginData = {
+                username: username,
+                password: password
+            };
+
+            fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(loginData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Redirect to dashboard after successful login
+                    window.location.href = "index.html";
+                } else {
+                    // Show error message if login fails
+                    document.getElementById("errorMessage").style.display = "block";
+                }
+            })
+            .catch(error => console.error('Error logging in:', error));
+        }
+    </script>
+
+</body>
+</html>
