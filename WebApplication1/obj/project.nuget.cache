@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QNaoJ8Gmw0ZUlpWDELnQHiZkEMkaqFntzx7E62zd7bmUydAMBOBQVS4YDgQtiBfnYUU0Jka/IPac/am2mam3gw==",
+  "dgSpecHash": "iYhV4vQspEtw8ZPBd1iUXUn6ZJGbpg2nujLRnQXa8R/Gfu1C1IW2sbNK6F0SXSarrkBJAQjC5oFDRsMQFnH4iw==",
   "success": true,
-  "projectFilePath": "D:\\0. New FYP Project\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj",
+  "projectFilePath": "D:\\0. New FYP Project\\Crypto-Project-Scalping1\\Crypto Project -Scalping1\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\zijia\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",
     "C:\\Users\\zijia\\.nuget\\packages\\azure.identity\\1.10.3\\azure.identity.1.10.3.nupkg.sha512",
