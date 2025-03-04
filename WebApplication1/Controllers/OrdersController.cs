@@ -86,6 +86,7 @@ namespace WebApplication1.Controllers
                 if (_binanceService.TryGetLastKnownPrice(order.Symbol, out var currentPrice))
                 {
                     order.Roi = ((currentPrice - order.EntryPrice) / order.EntryPrice) * 100;
+                    await UpdateProfitAndLossAsync(order, currentPrice);
                     _context.Orders.Update(order);
                     await _context.SaveChangesAsync();
                 }
@@ -132,6 +133,14 @@ namespace WebApplication1.Controllers
                 _context.Orders.Update(order);
             }
 
+            await _context.SaveChangesAsync();
+        }
+
+        // Method to update Profit and Loss
+        private async Task UpdateProfitAndLossAsync(Order order, decimal currentPrice)
+        {
+            order.ProfitAndLoss = (currentPrice - order.EntryPrice) * order.OrderPrice;
+            _context.Orders.Update(order);
             await _context.SaveChangesAsync();
         }
 

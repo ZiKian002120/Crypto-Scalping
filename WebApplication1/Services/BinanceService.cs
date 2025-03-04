@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using WebApplication1.Data;
 using WebApplication1.Models;
+using WebApplication1.Services.Interfaces;
 
 namespace WebApplication1.Services
 {
@@ -16,6 +17,7 @@ namespace WebApplication1.Services
         private readonly HttpClient _httpClient;
         private readonly ILogger<BinanceService> _logger;
         private readonly ApplicationDbContext _context;
+        private readonly TradingStrategyContext _strategyContext;
 
         // Dictionary to store the last known signals
         private readonly Dictionary<string, TradingSignal> _lastKnownSignals = new Dictionary<string, TradingSignal>();
@@ -27,6 +29,12 @@ namespace WebApplication1.Services
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            _strategyContext = new TradingStrategyContext();
+        }
+
+        public void SetStrategy(ITradingStrategy strategy)
+        {
+            _strategyContext.SetStrategy(strategy);
         }
 
         public async Task SaveOrderAsync(Order order)
@@ -146,294 +154,50 @@ namespace WebApplication1.Services
         }
 
 
-        // Fetch historical prices for each symbol and apply ICT strategy
-        public async Task<IEnumerable<TradingSignal>> GenerateICTSignalsForAllPairs(int limit = 500)
+        public async Task FetchAndGenerateSignalsAsync(string symbol, int limit)
+        {
+            var signals = await _strategyContext.GenerateSignalsAsync(symbol, limit);
+            foreach (var signal in signals)
+            {
+                HandleNewSignal(signal);
+            }
+        }
+
+        public async Task<IEnumerable<TradingSignal>> GenerateSignalsForAllPairs(int limit = 500)
         {
             var intervals = new[] { "1m", "15m", "1h", "4h" };
-
-            // Define the specific futures trading pairs you want to monitor
-            var symbols = new List<string>
-    {
-        "BTCUSDT", "ETHUSDT", "BNBUSDT",
-        "SOLUSDT"
-    };
+            var symbols = new List<string> { "BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT" };
 
             var tasks = symbols.Select(async symbol =>
             {
-                bool hasNewData = false;
+                var symbolSignals = new List<TradingSignal>();
 
                 foreach (var interval in intervals)
                 {
                     try
                     {
-                        var prices = await GetHistoricalPricesAsync(symbol, interval, limit);
-
-                        if (prices != null && prices.Any())
-                        {
-                            _logger.LogInformation($"Received {prices.Count()} data points for {symbol} at {interval} interval.");
-                            hasNewData = true;
-                            var signal = GenerateICTSignal(prices);
-
-                            // Only update if the signal is valid
-                            if (signal != null && !IsPlaceholderSignal(signal))
-                            {
-                                lock (_lastKnownSignals)
-                                {
-                                    _lastKnownSignals[symbol] = signal;
-                                    _logger.LogInformation($"Updated signal for {symbol}: {signal.Signal} at {signal.Price}");
-                                }
-
-                                await HandleNewPriceAsync(symbol, signal.Price);
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogWarning($"No data received for {symbol} at {interval} interval.");
-                        }
+                        var signals = await _strategyContext.GenerateSignalsAsync(symbol, limit);
+                        symbolSignals.AddRange(signals);
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, $"Error fetching or processing data for {symbol} at {interval} interval.");
+                        _logger.LogError(ex, $"Error generating signals for {symbol} at {interval} interval.");
                     }
                 }
 
-                // If no new data was received and no signal has ever been set, set a default signal
-                lock (_lastKnownSignals)
-                {
-                    if (!hasNewData && !_lastKnownSignals.ContainsKey(symbol))
-                    {
-                        _lastKnownSignals[symbol] = new TradingSignal
-                        {
-                            Symbol = symbol,
-                            Price = 0, // Default value to indicate no price
-                            Signal = "-", // Default signal to indicate no data
-                            Description = "No data received"
-                        };
-                        _logger.LogInformation($"Set default signal for {symbol} due to missing data.");
-                    }
-                }
+                return symbolSignals;
             });
 
-            // Await all tasks to ensure all symbols are processed
-            await Task.WhenAll(tasks);
-
-            // Return the signals in the fixed order, using the last known signals
-            return symbols.Select(symbol =>
-            {
-                if (_lastKnownSignals.TryGetValue(symbol, out var signal))
-                {
-                    return signal;
-                }
-                return new TradingSignal
-                {
-                    Symbol = symbol,
-                    Price = 0,
-                    Signal = "-",
-                    Description = "No data received"
-                };
-            }).ToList();
+            var results = await Task.WhenAll(tasks);
+            return results.SelectMany(s => s);
         }
 
-        // Helper method to determine if a signal is a placeholder
-        private bool IsPlaceholderSignal(TradingSignal signal)
+        private void HandleNewSignal(TradingSignal signal)
         {
-            return signal.Signal == "-" || signal.Price == 0;
+            // Handle the new signal (e.g., log or process it)
+            _logger.LogInformation($"New signal generated: {signal.Signal} for {signal.Symbol} at {signal.Price}");
         }
 
-        private bool IsStrongerSignal(TradingSignal newSignal, TradingSignal existingSignal)
-        {
-            // Example logic for prioritizing signals
-            if (newSignal.Signal == "Strong Buy" || newSignal.Signal == "Strong Sell")
-                return true;
-
-            if ((newSignal.Signal == "Buy" || newSignal.Signal == "Sell") &&
-                (existingSignal.Signal != "Strong Buy" && existingSignal.Signal != "Strong Sell"))
-                return true;
-
-            return false;
-        }
-
-
-        // Fetch historical prices for a symbol
-        public async Task<IEnumerable<CryptoPrice>> GetHistoricalPricesAsync(string symbol, string interval, int limit = 500)
-        {
-            var url = $"https://fapi.binance.com/fapi/v1/klines?symbol={symbol}&interval={interval}&limit={limit}";
-            var response = await _httpClient.GetAsync(url);
-            response.EnsureSuccessStatusCode();
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            var prices = JArray.Parse(responseBody).Select(k => new CryptoPrice
-            {
-                Symbol = symbol,
-                OpenTime = DateTimeOffset.FromUnixTimeMilliseconds((long)k[0]).DateTime,
-                Open = (decimal)k[1],
-                High = (decimal)k[2],
-                Low = (decimal)k[3],
-                Close = (decimal)k[4],
-                Volume = (decimal)k[5],
-                CloseTime = DateTimeOffset.FromUnixTimeMilliseconds((long)k[6]).DateTime
-            }).ToList();
-
-            return prices;
-        }
-
-        // Generate trading signals based on ICT strategy
-        public TradingSignal GenerateICTSignal(IEnumerable<CryptoPrice> prices)
-        {
-            TradingSignal signal = null;
-
-            var marketPhase = IdentifyMarketPhase(prices);
-            var orderBlocks = DetectOrderBlocks(prices);
-            var tradeEntries = CalculateOTE(prices);
-
-            var latestPrice = prices.Last();
-
-            // Find the nearest order block to the current price
-            var nearestOrderBlock = orderBlocks
-                .OrderBy(ob => Math.Abs(ob.PriceLevel - latestPrice.Close))
-                .FirstOrDefault();
-
-            // Check if the latest price is within a certain threshold of the order block
-            bool isPriceNearOrderBlock = nearestOrderBlock != null &&
-                                         Math.Abs(nearestOrderBlock.PriceLevel - latestPrice.Close) <= (latestPrice.Close * 0.005m);
-
-            // Check if there's an OTE entry near the latest price
-            var matchingOTE = tradeEntries
-                .FirstOrDefault(te => Math.Abs(te.EntryPrice - latestPrice.Close) <= (latestPrice.Close * 0.005m));
-
-            if (marketPhase == MarketPhase.Markup && isPriceNearOrderBlock && matchingOTE != null)
-            {
-                return new TradingSignal
-                {
-                    Symbol = latestPrice.Symbol,
-                    Price = latestPrice.Close,
-                    Signal = "Strong Buy",
-                    Description = $"Price near bullish order block with OTE during {marketPhase} phase"
-                };
-            }
-            else if (marketPhase == MarketPhase.Markdown && isPriceNearOrderBlock && matchingOTE != null)
-            {
-                return new TradingSignal
-                {
-                    Symbol = latestPrice.Symbol,
-                    Price = latestPrice.Close,
-                    Signal = "Strong Sell",
-                    Description = $"Price near bearish order block with OTE during {marketPhase} phase"
-                };
-            }
-            else if (marketPhase == MarketPhase.Markup && isPriceNearOrderBlock)
-            {
-                return new TradingSignal
-                {
-                    Symbol = latestPrice.Symbol,
-                    Price = latestPrice.Close,
-                    Signal = "Buy",
-                    Description = $"Price near bullish order block during {marketPhase} phase"
-                };
-            }
-            else if (marketPhase == MarketPhase.Markdown && isPriceNearOrderBlock)
-            {
-                return new TradingSignal
-                {
-                    Symbol = latestPrice.Symbol,
-                    Price = latestPrice.Close,
-                    Signal = "Sell",
-                    Description = $"Price near bearish order block during {marketPhase} phase"
-                };
-            }
-
-            // No strong signal detected
-            return null;
-        }
-
-
-        private MarketPhase IdentifyMarketPhase(IEnumerable<CryptoPrice> prices)
-        {
-            var closingPrices = prices.Select(p => p.Close).ToList();
-            var shortTermMA = closingPrices.TakeLast(10).Average();
-            var longTermMA = closingPrices.TakeLast(30).Average();
-
-            if (shortTermMA > longTermMA)
-                return MarketPhase.Markup;
-            else if (shortTermMA < longTermMA)
-                return MarketPhase.Markdown;
-            else
-                return MarketPhase.Accumulation;
-        }
-
-
-        private IEnumerable<OrderBlock> DetectOrderBlocks(IEnumerable<CryptoPrice> prices)
-        {
-            var orderBlocks = new List<OrderBlock>();
-            var priceList = prices.ToList();
-
-            for (int i = 1; i < priceList.Count; i++)
-            {
-                var currentPrice = priceList[i];
-                var prevPrice = priceList[i - 1];
-
-                if (prevPrice.Close > prevPrice.Open &&
-                    currentPrice.Close > currentPrice.Open &&
-                    currentPrice.Close > prevPrice.High)
-                {
-                    orderBlocks.Add(new OrderBlock
-                    {
-                        Symbol = currentPrice.Symbol,
-                        StartTime = prevPrice.OpenTime,
-                        EndTime = currentPrice.CloseTime,
-                        PriceLevel = prevPrice.Low,
-                        Description = "Bullish order block identified"
-                    });
-                }
-
-                if (prevPrice.Close < prevPrice.Open &&
-                    currentPrice.Close < currentPrice.Open &&
-                    currentPrice.Close < prevPrice.Low)
-                {
-                    orderBlocks.Add(new OrderBlock
-                    {
-                        Symbol = currentPrice.Symbol,
-                        StartTime = prevPrice.OpenTime,
-                        EndTime = currentPrice.CloseTime,
-                        PriceLevel = prevPrice.High,
-                        Description = "Bearish order block identified"
-                    });
-                }
-            }
-
-            return orderBlocks;
-        }
-
-
-        // Example: Calculate Optimal Trade Entry (OTE)
-        private IEnumerable<TradeEntry> CalculateOTE(IEnumerable<CryptoPrice> prices)
-        {
-            var tradeEntries = new List<TradeEntry>();
-
-            var recentHigh = prices.Max(p => p.High);
-            var recentLow = prices.Min(p => p.Low);
-
-            var fibLevels = new[] { 0.618m, 0.786m };
-            var retracementLevels = fibLevels.Select(f => recentLow + (recentHigh - recentLow) * f).ToArray();
-
-
-            foreach (var level in retracementLevels)
-            {
-                var entry = prices.FirstOrDefault(p => p.Close >= level && p.Open <= level);
-                if (entry != null)
-                {
-                    tradeEntries.Add(new TradeEntry
-                    {
-                        Symbol = entry.Symbol,
-                        EntryPrice = level,
-                        EntryTime = entry.CloseTime,
-                        Description = "OTE entry at Fibonacci level"
-                    });
-                }
-            }
-
-            return tradeEntries;
-        }
     }
 
     // Supporting classes
@@ -450,13 +214,14 @@ namespace WebApplication1.Services
     }
 
 
+    /*
     public class TradingSignal
     {
         public string Symbol { get; set; }
         public decimal Price { get; set; }
         public string Signal { get; set; }
         public string Description { get; set; }
-    }
+    } */
 
     public class OrderBlock
     {

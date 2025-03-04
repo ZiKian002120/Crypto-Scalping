@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\0. New FYP Project\\Crypto-Project-Scalping1\\Crypto Project -Scalping1\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj": {}
+    "D:\\0. VS Projects\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj": {}
   },
   "projects": {
-    "D:\\0. New FYP Project\\Crypto-Project-Scalping1\\Crypto Project -Scalping1\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj": {
+    "D:\\0. VS Projects\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\0. New FYP Project\\Crypto-Project-Scalping1\\Crypto Project -Scalping1\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj",
+        "projectUniqueName": "D:\\0. VS Projects\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj",
         "projectName": "WebApplication1",
-        "projectPath": "D:\\0. New FYP Project\\Crypto-Project-Scalping1\\Crypto Project -Scalping1\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj",
+        "projectPath": "D:\\0. VS Projects\\Crypto Project -Scalping\\WebApplication1\\WebApplication1.csproj",
         "packagesPath": "C:\\Users\\zijia\\.nuget\\packages\\",
-        "outputPath": "D:\\0. New FYP Project\\Crypto-Project-Scalping1\\Crypto Project -Scalping1\\Crypto Project -Scalping\\WebApplication1\\obj\\",
+        "outputPath": "D:\\0. VS Projects\\Crypto Project -Scalping\\WebApplication1\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\sdk\\7.0.306\\Sdks\\Microsoft.NET.Sdk.Web\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -39,7 +38,13 @@
           "warnAsError": [
             "NU1605"
           ]
-        }
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net6.0": {
@@ -106,6 +111,14 @@
             "System.Xml.Linq": {
               "target": "Package",
               "version": "[3.5.21022.801, )"
+            },
+            "WebSocket4Net": {
+              "target": "Package",
+              "version": "[0.15.2, )"
+            },
+            "WebSocketSharp": {
+              "target": "Package",
+              "version": "[1.0.3-rc11, )"
             }
           },
           "imports": [
@@ -127,7 +140,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.306\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.102\\RuntimeIdentifierGraph.json"
         }
       }
     }

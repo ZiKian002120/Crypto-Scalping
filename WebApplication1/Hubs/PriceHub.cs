@@ -1,6 +1,7 @@
 ﻿// PriceHub.cs
 using Microsoft.AspNetCore.SignalR;
 using WebApplication1.Services;
+using WebApplication1.Models;
 
 namespace WebApplication1.Hubs
 {

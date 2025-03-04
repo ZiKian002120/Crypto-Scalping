@@ -7,6 +7,8 @@ using WebApplication1.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using WebApplication1.Data;
+using WebApplication1.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 
 public class Startup
 {
@@ -16,11 +18,14 @@ public class Startup
     {
         Configuration = configuration;
     }
+
     public void ConfigureServices(IServiceCollection services)
     {
+        // Add DbContext using SQL Server provider
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
+        // Configure session options
         services.AddSession(options =>
         {
             options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout as needed
@@ -31,36 +36,61 @@ public class Startup
         // Add in-memory caching
         services.AddDistributedMemoryCache();
 
+        // Add controllers
         services.AddControllers();
-        
+
+        // Add SignalR
         services.AddSignalR();
-   
+
+        // Add HttpClient
         services.AddHttpClient();
+
+        // Register TradingStrategyContext as a singleton
+        services.AddSingleton<TradingStrategyContext>();
+
+        // Add logging
+        services.AddLogging();
 
         // Add the BinanceService to the dependency injection container
         services.AddScoped<BinanceService>();
+
+        // Register Strategy
+        services.AddScoped<ITradingStrategy, ICTStrategy>();
+        services.AddScoped<Scalping>();
+
+        services.AddSingleton<WebSocketService>();
+
+        services.AddControllersWithViews();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+        else
+        {
+            app.UseExceptionHandler("/Home/Error");
+            app.UseHsts();
+        }
 
         app.UseHttpsRedirection();
-        app.UseAuthorization();
+
+        // Serve static files from wwwroot
+        app.UseStaticFiles();
 
         app.UseRouting();
 
         app.UseSession();
 
-        app.UseStaticFiles(); // Serve static files from wwwroot
+        app.UseAuthorization();
 
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
             endpoints.MapHub<PriceHub>("/priceHub");
-            endpoints.MapFallbackToFile("index.html"); 
-            //endpoints.MapControllerRoute(
-            //name: "default",
-            //pattern: "{controller=Admin}/{action=Accounts}/{id?}");
+            endpoints.MapFallbackToFile("index.html");
         });
     }
 }
